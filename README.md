@@ -7,7 +7,7 @@ This repository is the first steps of implementing a video analytics system usin
 
 Diagram of current system is showing in the following picture.
 
-![diagram_video_analytics](https://user-images.githubusercontent.com/15813546/60735555-2739e980-9f69-11e9-99a1-175f9ec166c3.jpg)
+![image](https://user-images.githubusercontent.com/54276260/63275359-65683f80-c26f-11e9-83f3-bb128a0aca72.png)
 
 ### Version history
 | Version  | Date |Description
