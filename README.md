@@ -5,6 +5,11 @@ Diagram of current system is showing in the following picture.
 
 ![image](https://user-images.githubusercontent.com/54276260/63275359-65683f80-c26f-11e9-83f3-bb128a0aca72.png)
 
+To read the YOLO weights, it is not needed to convert the weights of DarkNet YOLO model to another format because OpenCV can work with weights directly. The related files can be downloaded from [Darknet project website](https://pjreddie.com/darknet/yolo/).
+
+
+
+
 ### Version history
 | Version  | Date |Description
 | ------------- | ------------- |---|
