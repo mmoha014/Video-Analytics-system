@@ -1,8 +1,4 @@
 # Video-Analytics-system
-This repository is the first steps of a video analytics system
-
-
-# Video-Analytics-system
 This repository is the first steps of implementing a video analytics system using mobile edge cloud computing (MECC). Currently, object detection and object tracking are implemented. The pipeline.py file is just object detection pipeline and pipeline2.py file is integration of object detection and tracking. Also, GUI_pipeline.py executes  two pipelines in one windows.
 
 Diagram of current system is showing in the following picture.
