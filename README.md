@@ -19,4 +19,5 @@ To read the YOLO weights, it is not needed to convert the weights of DarkNet YOL
 ### Integrating approaches
 A sample output of integration is shown in bellow video, which makes it possible to switch among all possible approaches that are implemented in version 1.01.
 
-[![](http://img.youtube.com/vi/_Wx3P0iq8ns/0.jpg)](http://www.youtube.com/watch?v=_Wx3P0iq8ns "")
+![image](https://user-images.githubusercontent.com/54276260/63279637-571e2180-c277-11e9-84da-7df7023f0de9.png)
+
