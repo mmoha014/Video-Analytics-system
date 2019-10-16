@@ -1,11 +1,11 @@
 """======================================================
 Files
 ========================================================="""
-FOLDER = "MOT17-13-FRCNN" #"ADL-Rundle-6"#Venice-2"#TUD-Campus"#PETS09-S2L1"#KITTI-17"#ETH-Sunnyday"#ETH-Pedcross2"#ETH-Bahnhof"#ADL-Rundle-8"#"TUD-Stadtmitte" TUD-Stadtmitte
-INPUT_VIDEO_SNOURCE = "/media/morteza/+989127464877/DataSets/MOT17Det/train/"+FOLDER+"/img1/"#/media/morteza/+989127464877/DataSets/VOT_Dataset/VOT2013/"+folder+"/color"#video.avi"#"project_video.mp4"#
+FOLDER = "MOT17-11-SDP" #"ADL-Rundle-6"#Venice-2"#TUD-Campus"#PETS09-S2L1"#KITTI-17"#ETH-Sunnyday"#ETH-Pedcross2"#ETH-Bahnhof"#ADL-Rundle-8"#"TUD-Stadtmitte" TUD-Stadtmitte
+INPUT_VIDEO_SNOURCE = "/home/mgharasu/Documents/Dataset/MOT17/train/"+FOLDER+"/img1/"#/media/morteza/+989127464877/DataSets/VOT_Dataset/VOT2013/"+folder+"/color"#video.avi"#"project_video.mp4"#                      
                       #"/media/morteza/+989127464877/DataSets/2DMOT2015/train/"+FOLDER+"/img1/"
-OUTPUT_VIDEO_WRITE = "/media/morteza/+989127464877/DataSets/MOT17Det/myTracker_output/"+FOLDER+".avi"#"/media/morteza/+989127464877/DataSets/2DMOT2015/output_YOLOCSRT/output_"+FOLDER+".avi"                     
-FILE_ADDRESS_DEEP_GROUNDTHRUTH = "/media/morteza/+989127464877/DataSets/MOT17Det/train/"+FOLDER+"/gt/gt.txt"
+OUTPUT_VIDEO_WRITE = "/home/mgharasu/Documents/Dataset/MOT17/myTracker_output/"+FOLDER+".avi"#"/media/morteza/+989127464877/DataSets/2DMOT2015/output_YOLOCSRT/output_"+FOLDER+".avi"                     
+FILE_ADDRESS_DEEP_GROUNDTHRUTH = "/home/mgharasu/Documents/Dataset/MOT17/train/"+FOLDER+"/gt/gt.txt"
                                 #"/media/morteza/+989127464877/DataSets/2DMOT2015/train/"+FOLDER+"/gt/gt.txt"
 FILE_ADDRESS_HOG_VEHICLE = ""
 FILE_ADDRESS_HOG_PEDESTRIAN = ""
@@ -13,27 +13,29 @@ FILE_ADDRESS_HAAR_VEHICLE = "haar_cascade_pretrianed_classifiers/cars.xml"
 FILE_ADDRESS_HAAR_PEDESTRIAN = "haar_cascade_pretrianed_classifiers/haarcascade_fullbody.xml"
 FILE_ADDRESS_DEEP_YOLO_WEIGHT = "Deep_wieghts_configs/yolov3.weights"
 FILE_ADDRESS_DEEP_YOLO_CONFIG = "Deep_wieghts_configs/yolov3.cfg"
-
+FILE_ADDRESS_DEEP_YOLO_TINY_WEIGHT = "Deep_wieghts_configs/yolov3-tiny.weights"
+FILE_ADDRESS_DEEP_YOLO_TINY_CONFIG = "Deep_wieghts_configs/yolov3-tiny.cfg"
 
 
 """ ===========================================
 Tracker type = 'BOOSTING', 'MIL', 'KCF','TLD', 'MEDIANFLOW', 'GOTURN', 'MOSSE', 'CSRT', 'Kalman_Filter'
 ==============================================="""
-TRACKER_TYPE = "CSRT" #"Kalman_Filter"#"Kalman_Filter"
+TRACKER_TYPE = "CSRT"#"Kalman_Filter"#"Kalman_Filter""CSRT"#
 LARGEST_OBJECT = True
 UPDATE_TRACKER = 10 #  after processing this number of frames, apply object detection
 
 """============================================================
 Detection method
-
+"
 different methods:
                     HOG_Vehicle
                     HOG_Pedestrian
                     Haar_Vehicle
                     Haar_Pedestrian
-                    Deep_Yolo  => image can not be GrayScale                  
+                    Deep_Yolo  => image can not be GrayScale   
+                    Deep_Yolo_Tiny               
 ==============================================================="""
-DETECTION_METHOD = "Deep_Yolo"#"Deep_Yolo"#"HOG_Pedestrian"#
+DETECTION_METHOD = "Deep_Yolo"#"Deep_Yolo_Tiny"#"HOG_Pedestrian"#
 
 # HOG pedestrian parameters
 VEHICLE_HOG_NON_MAX_SUPPRESSION_OVERLAP_THRESHOLD = None
@@ -64,3 +66,13 @@ __deep_classes={"person":0, "bicycle":1, "car":2, "motorcycle":3, "airplane":4, 
 DETECTION_CLASS = __deep_classes['person']
 # tracker age in loss
 max_age = 4
+
+#======================= version 3 global variables ==========================
+# detection = None
+# # MOT = None
+# from MOT_File_Generator import C_MOT_OUTPUT_GENERATER # version 2
+# MOT = C_MOT_OUTPUT_GENERATER('./logs/'+FOLDER+'.txt')# version 2 
+# groundtruth_box = None
+# targetSize = 1.0
+# frame_rate = 14
+# F1 = []

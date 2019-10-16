@@ -8,8 +8,8 @@ from MOT_File_Generator import C_MOT_OUTPUT_GENERATER # version 2
 from setting import *
 import cv2
 from sys import stdout
-
-            
+import time
+# from cpu_memory_track import monitor            
 # def write_MOT_OUTPUT(boxes_ids):
     
 
@@ -33,7 +33,7 @@ def main():
     #>>>>>>>>>>>>>>>>>>>>>>>>>> begin <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     #>>>>>>>>>>>>>>>>>>>>>>>>>> version 2 - Adapting the source code to compare with DevKit of MOTChallenge  <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-    groundtruth_box  = C_PREPROCESSING.MOT_read_groundtruth_file(FILE_ADDRESS_DEEP_GROUNDTHRUTH)
+    groundtruth_box  = C_PREPROCESSING.MOT2015_read_groundtruth_file(FILE_ADDRESS_DEEP_GROUNDTHRUTH)
     detection = C_DETECTION(DETECTION_METHOD)
     video = C_VIDEO_UNIT(INPUT_VIDEO_SNOURCE)    
     MOT = C_MOT_OUTPUT_GENERATER('./logs/'+FOLDER+'.txt')# version 2 
@@ -45,12 +45,14 @@ def main():
     frame_size = None#frame.shape
     frame_number = -1
     time_sum = 0
-
+    detection_time = []
+    tracker_time = []
+    
     search_for_frame_to_detect_object = True
 
     while True:        
         ret, frame = video.get_frame()
-        if not ret:
+        if not ret or frame_number>13:
             break
 
         frame_number += 1
@@ -80,7 +82,11 @@ def main():
         # frame = C_PREPROCESSING.Color_Conversion(frame,"GRAY") //deep network needs the color image. If we feed grayscale image, there will be error in code.
         # search for frame to detect object- processing the first frames of input source 
         if search_for_frame_to_detect_object:
+            t1 = time.time()
             detected_boxes, frame = detection.Detection_BoundingBox(frame)
+            t2 = time.time()
+            detection_time.append(t2-t1)
+
             if TRACKER_TYPE is "Kalman_Filter":
                 if tracker is None:
                     tracker = C_TRACKER(TRACKER_TYPE)
@@ -101,7 +107,10 @@ def main():
                     # frame_number = 0
                     continue
                 else:
+                    t1= time.time()
                     tracker.update_pipeline(frame, detected_boxes)
+                    t2 = time.time()
+                    tracker_time.append(t2-t1)
                     # version 1
                     MOT.write(frame_number, tracker.Get_MOTChallenge_Format()) #version 2
                     continue
@@ -109,16 +118,23 @@ def main():
             
             if tracker is not None:
                 # search_for_frame_to_detect_object, frame = tracker.update2(frame, frame_size)
+                t1 = time.time()
                 frame = tracker.update(frame)#, frame_size)
+                t2 = time.time()
+                tracker_time.append(t2-t1)
                 MOT.write(frame_number, tracker.Get_MOTChallenge_Format()) #version 2
 
             cv2.imshow("output",frame)
             cv2.waitKey(1)
             continue
         else:
-
+            t1 = time.time()
             frame = tracker.update(frame)
+            t2 = time.time()
+            tracker_time.append(t2-t1)
             MOT.write(frame_number, tracker.Get_MOTChallenge_Format()) #version 2
+            # print(tracker.Get_MOTChallenge_Format())
+            # print(groundtruth_box)
             # Output            
             try:
                 cv2.imshow("output", frame)
@@ -129,6 +145,10 @@ def main():
 
     MOT.close() # version 2
     cv2.destroyAllWindows()
+    # print("detection time: ", np.average(detection_time))
+    # print("tracking time: ", np.average(tracker_time))
         
 if __name__ == "__main__":
-    main()
+    # main()
+    from cpu_memory_track import monitor
+    cpu,mem = monitor(main)

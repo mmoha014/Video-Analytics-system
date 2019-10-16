@@ -1,6 +1,29 @@
 import numpy as np
 import cv2
 
+def resize_image(img, target_size):
+    return cv2.resize(img, (target_size, target_size))
+# ====start================= version 3 ========================
+def k_min_cell_index_3D_matrix(m,k):    
+    min_values = np.ones(k, dtype=np.float)*100.  # check this value for the future
+    min_values_arg = [[1,1,1] for i in range(k)]    
+    for i in range(len(m)):
+        for j in range(len(m[i])):
+            for k in range(len(m[i][j])):
+                if np.sum(m[i][j][k]<min_values)>0:
+                    index = np.argmax(min_values)
+                    min_values[index] = m[i][j][k]
+                    min_values_arg[index] = [i,j,k]
+                    #min_value = m[i][j][k] 
+                    #qu.enqueue(min_value)                        
+                    
+    index_sort = np.argsort(min_values)
+    result = [min_values_arg[index] for index in index_sort]
+    
+    #return qu.get()  
+    return result, np.sort(min_values)       
+#====end ============ version 3 ===============================
+                
 def correct_position(box):    
     x = int(round(abs(box[0])))
     y = int(round(abs(box[1])))
@@ -24,6 +47,8 @@ def box_iou2(a, b):
         return float(s_intsec)/(abs(s_a) + abs(s_b) -s_intsec)
 
         
+def resize_bounding_box(bboxes, scale):
+    return np.array(bboxes) /scale
 
 def KalmanFilter_draw_box( img, trackers, colors):
         show_label = True

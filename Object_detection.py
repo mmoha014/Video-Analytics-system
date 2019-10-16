@@ -5,6 +5,7 @@ import numpy as np
 from Detection_Models.YOLO import C_DETECTION_YOLO
 from Detection_Models.HAAR import C_DETECTION_HAAR
 from Detection_Models.HOG import C_DETECTION_HOG
+from Detection_Models.YOLO_TINY import C_DETECTION_YOLO_TINY
 
 class C_DETECTION:
     
@@ -23,9 +24,13 @@ class C_DETECTION:
             self.__detector = C_DETECTION_HAAR(FILE_ADDRESS_HAAR_PEDESTRIAN)# do related loadings and preparations
         elif Method == 'Deep_Yolo':
             self.__detector = C_DETECTION_YOLO()#cv2.dnn.readNet(FILE_ADDRESS_DEEP_YOLO_WEIGHT, FILE_ADDRESS_DEEP_YOLO_CONFIG)
-        
+        elif Method == 'Deep_Yolo_Tiny':
+            self.__detector = C_DETECTION_YOLO_TINY()#cv2.dnn.readNet(FILE_ADDRESS_DEEP_YOLO_TINY_WEIGHT, FILE_ADDRESS_DEEP_YOLO_TINY_CONFIG)
 
     def Switch_detection(self, Method):
+        if self.__Method == Method:
+            return
+            
         self.__Method = Method        
 
         if Method == 'HOG_Vehicle':            

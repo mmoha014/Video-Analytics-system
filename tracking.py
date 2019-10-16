@@ -18,6 +18,7 @@ class C_TRACKER:
 
         if tracker_type is not "Kalman_Filter":
             self.__tracker = cv2.MultiTracker_create()
+
         else:
             self.__tracker = []
             
