@@ -8,8 +8,10 @@ from MOT_File_Generator import C_MOT_OUTPUT_GENERATER # version 2
 from setting import *
 import cv2
 from sys import stdout
-
-            
+import time
+import sys
+import matplotlib.pyplot as plt
+# from cpu_memory_track import monitor            
 # def write_MOT_OUTPUT(boxes_ids):
     
 
@@ -33,10 +35,11 @@ def main():
     #>>>>>>>>>>>>>>>>>>>>>>>>>> begin <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     #>>>>>>>>>>>>>>>>>>>>>>>>>> version 2 - Adapting the source code to compare with DevKit of MOTChallenge  <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-    groundtruth_box  = C_PREPROCESSING.MOT_read_groundtruth_file(FILE_ADDRESS_DEEP_GROUNDTHRUTH)
+    groundtruth_box  = C_PREPROCESSING.MOT2015_read_groundtruth_file(FILE_ADDRESS_DEEP_GROUNDTHRUTH)
     detection = C_DETECTION(DETECTION_METHOD)
     video = C_VIDEO_UNIT(INPUT_VIDEO_SNOURCE)    
     MOT = C_MOT_OUTPUT_GENERATER('./logs/'+FOLDER+'.txt')# version 2 
+    groundtruth_box  = C_PREPROCESSING.MOT2015_read_groundtruth_file(FILE_ADDRESS_DEEP_GROUNDTHRUTH)#
 
     tracker = None
 
@@ -45,13 +48,19 @@ def main():
     frame_size = None#frame.shape
     frame_number = -1
     time_sum = 0
-
+    detection_time = []
+    tracker_time = []
+    
     search_for_frame_to_detect_object = True
 
     while True:        
         ret, frame = video.get_frame()
+    
         if not ret:
             break
+        t1 = time.time()
+        frame = cv2.resize(frame,(900,900))
+        
 
         frame_number += 1
         stdout.write('\r%d'% frame_number)
@@ -59,8 +68,17 @@ def main():
             frame_size = frame.shape
 
         if frame_number % UPDATE_TRACKER == 0 or TRACKER_TYPE is "Kalman_Filter":
-            search_for_frame_to_detect_object = True            
+            search_for_frame_to_detect_object = True
 
+        gt = groundtruth_box[frame_number]
+        print(gt)
+        frame, gt = C_PREPROCESSING.resize(frame,460,gt)
+        frame = draw_MOT_box(gt,frame)
+        cv2.imshow("output",frame)
+        cv2.waitKey(1)
+        # plt.imshow(frame)
+        # plt.show()
+        continue
         # if frame_number % 35 == 0 and frame_number>0:            
         #     print("change tracker to MEDIANFLOW")
         #     tracker.switch_Tracker(frame, "MEDIANFLOW")
@@ -74,22 +92,27 @@ def main():
         #     tracker.switch_Tracker(frame, "KCF")
         
             
-        # gt = groundtruth_box[frame_number-1]
+        gt = groundtruth_box[frame_number-1]
         # Preprocessing    
         # frame  = C_PREPROCESSING.resize(frame, min(400, frame.shape[1]))
         # frame = C_PREPROCESSING.Color_Conversion(frame,"GRAY") //deep network needs the color image. If we feed grayscale image, there will be error in code.
         # search for frame to detect object- processing the first frames of input source 
         if search_for_frame_to_detect_object:
+            t1 = time.time()
             detected_boxes, frame = detection.Detection_BoundingBox(frame)
-            if TRACKER_TYPE is "Kalman_Filter":
-                if tracker is None:
-                    tracker = C_TRACKER(TRACKER_TYPE)
-                trackers, colors = tracker.update_pipeline(frame, detected_boxes)
-                frame = KalmanFilter_draw_box(frame, trackers, colors)
-                cv2.imshow("output", frame)
-                cv2.waitKey(1)
-                MOT.write(frame_number, tracker.Get_MOTChallenge_Format())
-                continue
+            t2 = time.time()
+            detection_time.append(t2-t1)
+            # print("elapsed time for YOLO:",t2-t1)
+
+            # if TRACKER_TYPE is "Kalman_Filter":
+            #     if tracker is None:
+            #         tracker = C_TRACKER(TRACKER_TYPE)
+            #     trackers, colors = tracker.update_pipeline(frame, detected_boxes)
+            #     frame = KalmanFilter_draw_box(frame, trackers, colors)
+            #     cv2.imshow("output", frame)
+            #     cv2.waitKey(1)
+            #     MOT.write(frame_number, tracker.Get_MOTChallenge_Format())
+            #     continue
             
             if len(detected_boxes)>0:            
                 search_for_frame_to_detect_object = False
@@ -99,36 +122,51 @@ def main():
                     tracker.Add_Tracker(frame, detected_boxes)
                     MOT.write(frame_number, tracker.Get_MOTChallenge_Format()) #version 2
                     # frame_number = 0
-                    continue
+                    
                 else:
+                    t1= time.time()
                     tracker.update_pipeline(frame, detected_boxes)
+                    t2 = time.time()
+                    tracker_time.append(t2-t1)
                     # version 1
                     MOT.write(frame_number, tracker.Get_MOTChallenge_Format()) #version 2
-                    continue
+                    print("detected objects:",len(detected_boxes),", tracker size: ", tracker.Get_trackerSize())
+                  
 
             
             if tracker is not None:
                 # search_for_frame_to_detect_object, frame = tracker.update2(frame, frame_size)
-                frame = tracker.update(frame)#, frame_size)
-                MOT.write(frame_number, tracker.Get_MOTChallenge_Format()) #version 2
-
-            cv2.imshow("output",frame)
-            cv2.waitKey(1)
-            continue
+                t1 = time.time()
+                bb,frame = tracker.update(frame)#, frame_size)
+                t2 = time.time()
+                tracker_time.append(t2-t1)
+                MOT.write(frame_number, tracker.Get_MOTChallenge_Format()) #version 2            
+            
         else:
-
-            frame = tracker.update(frame)
+            t1 = time.time()
+            bb,frame = tracker.update(frame)
+            t2 = time.time()
+            tracker_time.append(t2-t1)
             MOT.write(frame_number, tracker.Get_MOTChallenge_Format()) #version 2
+            # print(tracker.Get_MOTChallenge_Format())
+            # print(groundtruth_box)
             # Output            
-            try:
-                cv2.imshow("output", frame)
-                if cv2.waitKey(1) & 0xFF == ord('q'):
-                    break #esc to quit
-            except:
-                print("error in reading image and showing it")
+            # try:
+            # cv2.imshow("output", frame)
+            # if cv2.waitKey(1) & 0xFF == ord('q'):
+            #     break #esc to quit
+            # except:
+            #     print("error in reading image and showing it")
+            t2 = time.time()
+            # print(" tracker elapsed time:", t2-t1)
+        print("frame:",frame_number)
+        cv2.imshow("output",frame)
+        cv2.waitKey(1)
 
     MOT.close() # version 2
     cv2.destroyAllWindows()
+    # print("detection time: ", np.average(detection_time))
+    # print("tracking time: ", np.average(tracker_time))
         
 if __name__ == "__main__":
-    main()
+    main()    

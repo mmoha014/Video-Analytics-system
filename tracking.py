@@ -5,6 +5,8 @@ import numpy as np
 from utils import *
 import KalmanFilter as kf_tracker
 from setting import max_age
+import sys
+from preprocessing import C_PREPROCESSING
 
 class C_TRACKER:
     
@@ -12,16 +14,33 @@ class C_TRACKER:
         self.__type = tracker_type        
         self.__trackerTypes = ['BOOSTING', 'MIL', 'KCF','TLD', 'MEDIANFLOW', 'GOTURN', 'MOSSE', 'CSRT', 'Kalman_Filter']
         self.colors = []
+        self.__frame_size = None
         self.__predicted_boxes = []
         self.__identity = 0
         self.__bgs = None
-
+        self.initialized = True
+        
         if tracker_type is not "Kalman_Filter":
             self.__tracker = cv2.MultiTracker_create()
+
         else:
             self.__tracker = []
             
-    
+    def Empty(self):
+        # print("Empty function:", self.initialized)
+        # if self.initialized:
+        #     self.initialized = False
+        #     return True
+        # else:
+        #     return False
+        # print("tracker.Empty(): ", True if len(self.__predicted_boxes)==0 else False)
+        if len(self.__predicted_boxes)>0:
+            return False
+        return True
+
+    def Get_trackerSize(self):
+        return get_size(self.__tracker)+get_size(self.colors)+get_size(self.__predicted_boxes)
+
     def __createTrackerByName(self, TrackerType):
         # Create a tracker based on tracker name
         if TrackerType == self.__trackerTypes[0]:
@@ -54,20 +73,26 @@ class C_TRACKER:
     #         self.__tracker.add(self.__createTrackerByName(self.__type),frame,(bb[0],bb[1],bb[2],bb[3]))
     #         self.__colors.append((randint(0,255), randint(0,255), randint(0,255)))
     def Add_Tracker(self, frame, BoundingBoxes, is_switch=False):
-            
+        self.__frame_size = frame.shape[0]
         if is_switch:
             tmp_colors = self.colors
             self.colors = []
-
+        # print("# objs: ", len(BoundingBoxes), " - is_switch: ", is_switch)
         for i, bb in enumerate(BoundingBoxes):
+            # print("before: ",bb[0],",",bb[1],",",bb[2],",",bb[3])
             self.__tracker.add(self.__createTrackerByName(self.__type),frame,(bb[0],bb[1],bb[2],bb[3]))
+            
             self.__predicted_boxes.append((bb[0],bb[1],bb[2],bb[3]))
-            # self.__colors.append((randint(0,255), randint(0,255), randint(0,255)))
+            
+            # self.__colors.append((randint(0,255), randint(0,255), randint(0,255)))            
             #--- version 2 -----
             if is_switch:
-                self.colors.append((tmp_colors[i][0], tmp_colors[i][1], tmp_colors[i][2], tmp_colors[i][3], tmp_colors[4]))
+                # print("after", tmp_colors[i])
+                self.colors.append((tmp_colors[i][0], tmp_colors[i][1], tmp_colors[i][2], tmp_colors[i][3], tmp_colors[i][4]))
+                
             else:
                 self.colors.append((randint(0,255), randint(0,255), randint(0,255), self.__Get_NewIdentity(),0))
+                # print("new colors: ", self.colors[-1])
 
     def update(self, frame):#boxes, detected_boxes):
         if self.__type != 'Kalman_Filter':
@@ -77,7 +102,7 @@ class C_TRACKER:
                 p2 = (int(newbox[0] + newbox[2]), int(newbox[1] + newbox[3]))
                 cv2.rectangle(frame, p1, p2, self.colors[i][0:3], 2, 1)        
         
-        return frame
+        return self.__predicted_boxes,frame
     
     '''    
     finding objects that are tracking
@@ -101,9 +126,6 @@ class C_TRACKER:
     
     def Get_predicted_boxes(self):
         return self.__predicted_boxes
-
-
-
    
 
     def assign_detections_to_trackers(self, trackers, detections, iou_thrd = 0.3):
@@ -282,6 +304,7 @@ class C_TRACKER:
             return multiTracker, newcolors
 
     def Get_MOTChallenge_Format(self):
+        # print("in tracker class-> get_motchallenge_format function: ",self.__predicted_boxes)
         tmp = []
         try:
             for i, box in enumerate(self.__predicted_boxes):
@@ -295,13 +318,26 @@ class C_TRACKER:
         self.__identity += 1
         return  self.__identity
     
-    def switch_Tracker(self, frame, tracker_type, bboxes = None):
-        if tracker_type is not "Kalman_Filter":
-            self.__tracker = cv2.MultiTracker_create()
-            self.__type = tracker_type
-            bboxes = self.__predicted_boxes
-            self.__predicted_boxes = []
-            self.Add_Tracker(frame, bboxes, is_switch=True)
+    def switch_Tracker(self, frame, tracker_type, new_frame_size=None):
+        if tracker_type is not "Kalman_Filter" and self.__type != None:                        
+            if tracker_type != self.__type:
+                # print("switch_Tracker: ",tracker_type, self.__type)
+                if new_frame_size != self.__frame_size and self.__frame_size != None:
+                    # print("before change frame and box sizes- bboxes", self.__predicted_boxes)
+                    # if self.__frame_size != None:
+                    bboxes = C_PREPROCESSING.resize_bbox(self.__predicted_boxes,new_frame_size, self.__frame_size)#(frame,new_frame_size,self.__predicted_boxes)
+                    # print("frame size: ", frame.shape[0],",",frame.shape[1])                    
+                else:
+                    # print("no image size change")
+                    bboxes = self.__predicted_boxes
+                
+                # print("bboxes: ", bboxes)
+                # print("before tracker update")
+                self.__tracker = cv2.MultiTracker_create()
+                self.__type = tracker_type                
+                self.__predicted_boxes = []
+                self.Add_Tracker(frame, bboxes, is_switch=True)
+                # print("after tracker update")
         else:
             self.initialize_kalmanfilter_tracker()
             self.__type = tracker_type            

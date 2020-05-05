@@ -2,9 +2,9 @@ from setting import *
 import cv2
 import numpy as np
 
-class C_DETECTION_YOLO:
+class C_DETECTION_YOLO_TINY:
     def __init__(self):
-        self.__detector = cv2.dnn.readNet(FILE_ADDRESS_DEEP_YOLO_WEIGHT, FILE_ADDRESS_DEEP_YOLO_CONFIG)
+        self.__detector = cv2.dnn.readNet(FILE_ADDRESS_DEEP_YOLO_TINY_WEIGHT, FILE_ADDRESS_DEEP_YOLO_TINY_CONFIG)
 
 
     def __get_output_layers(self,net):
@@ -68,11 +68,11 @@ class C_DETECTION_YOLO:
                 if v<0:
                     roi_boxes[i][j] = 0
             
-            box = roi_boxes[i]
-            x = int(round(box[0]))
-            y = int(round(box[1]))
-            w = int(round(box[2]))
-            h = int(round(box[3]))
+                box = roi_boxes[i]
+                x = int(round(box[0]))
+                y = int(round(box[1]))
+                w = int(round(box[2]))
+                h = int(round(box[3]))
         
             boxes.append((x,y, w, h))  
             # if area<w*h:
@@ -80,7 +80,7 @@ class C_DETECTION_YOLO:
             #     bigest_idx = idx
             # draw_bounding_box(frame, roi_class[i], roi_confidences[i], x,y, x+w, y+h)
             if roi_class[i] in DETECTION_CLASS:
-                # cv2.rectangle(inp_frame, (x,y), (x+w,y+h), [0,0,255])
+                cv2.rectangle(inp_frame, (x,y), (x+w,y+h), [0,0,255])
                 detected_boxes.append((x,y, w, h))
         
         return detected_boxes, inp_frame

@@ -1,6 +1,8 @@
 from setting import FILE_ADDRESS_DEEP_GROUNDTHRUTH
 import cv2
 import numpy as np
+import cv2
+import matplotlib.pyplot as plt
 
 class C_PREPROCESSING:
     
@@ -27,11 +29,68 @@ class C_PREPROCESSING:
         return feature_image
     
     @staticmethod
-    def resize(image, width):
-        scale = np.divide(width, image.shape[1], dtype=np.float)
-        height = int(np.round(image.shape[0]*scale))
+    def resize_image(image, targetsize):
+        return cv2.resize(image, targetsize)
+    
+    @staticmethod
+    def resize_bbox(bboxes, target_size, old_size):
+        # print("target:", target_size,", old:", old_size)
+        scale = target_size/old_size
+        # print("old:",old_size)        
+        newbboxes = []
+        for i, box in enumerate(bboxes):
+            newbboxes.append([box[0]*scale, box[1]*scale, box[2]*scale, box[3]*scale])
+            # print("scale: ", scale, ", new box: ", newbboxes[-1])
+        return newbboxes
 
-        return cv2.resize(image, (width, height))
+    @staticmethod
+    def resize(imageToPredict, target_size, bboxes):    
+        # print(imageToPredict.shape)
+
+        # Note: flipped comparing to your original code!
+        # x_ = imageToPredict.shape[0]
+        # y_ = imageToPredict.shape[1]
+        # cv2.rectangle(imageToPredict, (bboxes[0][0],bboxes[0][1]),(bboxes[0][2],bboxes[0][3]),(0,255,0),1)
+        # cv2.imshow("orig", imageToPredict)
+        # cv2.waitKey(0)
+        y_ = imageToPredict.shape[0]
+        x_ = imageToPredict.shape[1]
+
+        targetSize = target_size
+        x_scale = targetSize / x_
+        y_scale = targetSize / y_
+        # print(x_scale, y_scale)
+        img = cv2.resize(imageToPredict, (targetSize, targetSize));
+        # print(img.shape)
+        img = np.array(img);
+        
+        # original frame as named values
+        newbboxes = []
+        for i,box in enumerate(bboxes):
+            # print("bfr:",box)
+            if len(box)>4: #bboxes from gt
+                (origLeft, origTop, origRight, origBottom) = box[:-1]#(136, 164 , 237, 466)
+            else: #bboxes from tracker.switch
+                (origLeft, origTop, origRight, origBottom) = box#(136, 164 , 237, 466)
+
+            
+            x = int(np.round(origLeft * x_scale))
+            y = int(np.round(origTop * y_scale))
+            xmax = int(np.round(origRight * x_scale))
+            ymax = int(np.round(origBottom * y_scale))
+            newbboxes.append([x, y, xmax, ymax])
+            # print("aftr:",[x,y,xmax, ymax])
+            # cv2.rectangle(img, (x,y,xmax, ymax), (255,0,0),2)
+            # cv2.rectangle(img, (newbboxes[i][0], newbboxes[i][1]), (newbboxes[i][0]+newbboxes[i][2], newbboxes[i][1]+newbboxes[i][3]), (255, 255, 0), 1)
+            #print("x:", x, " y:", y,"  xmax:", xmax, "  ymax:",ymax)
+            # print("i0:", newbboxes[i][0], "  i1:", newbboxes[i][1], "  i2:", newbboxes[i][2], "  i3:", newbboxes[i][3])
+            #print("\n\n")
+            
+        # cv2.imshow("output", imageToPredict)
+        # cv2.waitKey(0)
+        # cv2.destroyAllWindows()
+        return img, newbboxes
+
     @staticmethod
     def VOT2013_read_groundtruth_file(fileaddress):
         groundtruth = []
@@ -45,25 +104,47 @@ class C_PREPROCESSING:
         return groundtruth
     
     @staticmethod
-    def MOT_read_groundtruth_file(fileaddress):
+    def MOT_read_frame_bboxes_from_groundtruth(gt, frame_number):
+        res_list = [i for i in range(len(gt)) if gt[i][0][0] == gt]
+        return res_list
+
+    def MOT2017_read_groudntruth_file(fileaddress, number_of_frames):
+        fp = tuple(open(FILE_ADDRESS_DEEP_GROUNDTHRUTH,"r"))
+        gt_boxes = [[] for i in range(number_of_frames)]
+        for line in fp:
+            temp = line.split(',')
+            frame_number = frame_number = int(float(temp[0]))
+            if frame_number == 1:
+                a=0
+            object_id = int(float(temp[1]))
+            left, top, width, height = int(float(temp[2])), int(float(temp[3])),int(float(temp[4])), int(float(temp[5])) 
+            gt_boxes[frame_number-1].append([top, left, width, height, object_id])
+        
+        return gt_boxes
+
+        
+    def MOT2015_read_groundtruth_file(fileaddress):
         frame_number_o = -1
         total_bboxes = []
-        current_bbox = []
+        current_bbox = None
+
         fp = tuple(open(FILE_ADDRESS_DEEP_GROUNDTHRUTH, "r"))
         for line in fp:# line:
-            temp = line.split(',')#re.findall(r'\d+', line)            
+            temp = line.split(' ')#re.findall(r'\d+', line)            
             
             frame_number = int(float(temp[0]))
             object_id = int(float(temp[1]))
+            if frame_number==301:
+                a=0
             left, top, width, height = int(float(temp[2])), int(float(temp[3])),int(float(temp[4])), int(float(temp[5]))                
             
             if frame_number==frame_number_o:            
-                current_bbox.append([top, left, width, height, object_id])
+                current_bbox.append([left, top, width, height, object_id])
             else:
-                if current_bbox != []:
+                if current_bbox != None:
                     total_bboxes.append(current_bbox)
                 current_bbox = []      
-                current_bbox.append([top, left, width, height, object_id])
+                current_bbox.append([left, top, width, height, object_id])
                 
             frame_number_o = frame_number            
         
@@ -75,5 +156,7 @@ class C_PREPROCESSING:
         for gt in groundtruth:
             cv2.rectangle(frame, (gt[1],gt[0]), (gt[1]+gt[2],gt[0]+gt[3]), (255,255,255),1)
             cv2.putText(frame,str(gt[4]),(gt[1]+2,gt[0]-2), font, 1,(255,255,255),2,cv2.LINE_AA)
-        cv2.resize(frame, (frame.shape[1]/2, frame.shape[0]/2))
+        cv2.resize(frame, (int(frame.shape[1]/2), int(frame.shape[0]/2)))
+        cv2.imshow("out", frame)
+        cv2.waitKey(0)
         return frame

@@ -5,6 +5,8 @@ import numpy as np
 from Detection_Models.YOLO import C_DETECTION_YOLO
 from Detection_Models.HAAR import C_DETECTION_HAAR
 from Detection_Models.HOG import C_DETECTION_HOG
+from Detection_Models.YOLO_TINY import C_DETECTION_YOLO_TINY
+from Detection_Models.Lane2018 import LaneNet, initialization, infere
 
 class C_DETECTION:
     
@@ -23,9 +25,16 @@ class C_DETECTION:
             self.__detector = C_DETECTION_HAAR(FILE_ADDRESS_HAAR_PEDESTRIAN)# do related loadings and preparations
         elif Method == 'Deep_Yolo':
             self.__detector = C_DETECTION_YOLO()#cv2.dnn.readNet(FILE_ADDRESS_DEEP_YOLO_WEIGHT, FILE_ADDRESS_DEEP_YOLO_CONFIG)
-        
+        elif Method == 'Deep_Yolo_Tiny':
+            self.__detector = C_DETECTION_YOLO_TINY()#cv2.dnn.readNet(FILE_ADDRESS_DEEP_YOLO_TINY_WEIGHT, FILE_ADDRESS_DEEP_YOLO_TINY_CONFIG)
+        elif Method=='LaneNet':
+            self.__detector = LaneNet(phase='test', net_flag='vgg')
+            self.input_tensor, self.binary_seg_ret, self.instance_seg_ret, self.postprocessor, self.sess = initialization()
 
     def Switch_detection(self, Method):
+        if self.__Method == Method:
+            return
+            
         self.__Method = Method        
 
         if Method == 'HOG_Vehicle':            
@@ -39,10 +48,18 @@ class C_DETECTION:
             self.__detector = C_DETECTION_HAAR(FILE_ADDRESS_HAAR_PEDESTRIAN)# do related loadings and preparations
         elif Method == 'Deep_Yolo':
             self.__detector = C_DETECTION_YOLO()#cv2.dnn.readNet(FILE_ADDRESS_DEEP_YOLO_WEIGHT, FILE_ADDRESS_DEEP_YOLO_CONFIG)self.__Method = Method        
+        elif Method=='LaneNet':
+            self.__detector = LaneNet(phase='test', net_flag='vgg')
+            self.input_tensor, self.binary_seg_ret, self.instance_seg_ret, self.postprocessor, self.sess = initialization()
+
         
 
     def Detection_BoundingBox(self,inp_frame):  
-        return self.__detector.Detection_plus_BoundingBox(inp_frame)      
+        return self.__detector.Detection_plus_BoundingBox(inp_frame)        
+        # return output
+    
+    def Lane_Detection(self, input_frame):
+        return infere(input_frame, self.input_tensor, self.binary_seg_ret, self.instance_seg_ret, self.postprocessor, self.sess)
     
                     
         

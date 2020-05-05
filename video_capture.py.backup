@@ -4,7 +4,7 @@ import cv2
 from imutils import paths
 from setting import *
 import time
-import re        
+        
 
 class C_VIDEO_UNIT:
     '''
@@ -19,7 +19,6 @@ class C_VIDEO_UNIT:
         self.video_type = 0
         self._number_of_frames = 0
         if type(input_video) is int:
-            # webcam
             self.__capt = cv2.VideoCapture(input_video)
             self.video_type = 0
         elif(len(input_video.split("."))>1):
@@ -27,19 +26,11 @@ class C_VIDEO_UNIT:
             self.video_type = 1
             self.__capt = cv2.VideoCapture(input_video)
             self.__frame_rate = self.__capt.get(cv2.CAP_PROP_FPS)
-            self.__set_frame_start = False
         else:
             #directory address
-            numbers = re.compile(r'(\d+)')
-
-            def numericalSort(value):
-                parts = numbers.split(value)
-                parts[1::2] = map(int, parts[1::2])
-                return parts
-
             self.video_type = 2
             self.__sequence_images_counter = 0
-            self.__capt = sorted(paths.list_images(input_video), key = numericalSort)
+            self.__capt = sorted(paths.list_images(input_video))
             self._number_of_frames = len(self.__capt)
         
         self.__frame_rate = frame_rate#self.get_frame_rate(input_video, video_type)
@@ -52,31 +43,24 @@ class C_VIDEO_UNIT:
                 img = cv2.imread(self.__capt[0])
                 self.__frame_width = int(img.shape[1])
                 self.__frame_height = int(img.shape[0])
-            self.__VideoWriter = cv2.VideoWriter(output_video,cv2.VideoWriter_fourcc('M','J','P','G'), frame_rate, (self.__frame_width, self.__frame_height))
+            self.__VideoWriter = cv2.VideoWriter(output_video,cv2.VideoWriter_fourcc('M','J','P','G'), 15, (self.__frame_width, self.__frame_height))
             
     
     def get_number_of_frames(self):
         return self._number_of_frames
-    
-    def set_video_frame_start_read(self, start_frame):
-        self.__capt.set(2, start_frame)
-
-    def get_frame_position(self, start_frame, cont):        
-        try:
-            if self.video_type == 2:
-                frame = cv2.imread(self.__capt[start_frame])
-            elif self.video_type == 1:
-                ret, frame = self.__capt.read()
-            
-            if frame is not None:                
-                return True, frame
-            else:
-                cont = 0                
-                return False, None
-        except:            
-            cont = 0
-            return False, None
         
+    def get_frame_position(self, start_frame, cont):
+        if self.video_type == 2:
+            try:
+                frame = cv2.imread(self.__capt[start_frame])
+                if frame is not None:                
+                    return True, frame
+                else:
+                    cont = False
+                    return False, frame
+            except:
+                cont = False
+                return False, frame
         
         
     def get_frame(self):
@@ -97,8 +81,7 @@ class C_VIDEO_UNIT:
 
         if len(in_frame.shape)>2:
             # color image
-            # self.__VideoWriter.write(in_frame)
-            self._C_VIDEO_UNIT__VideoWriter.write(in_frame)
+            self.__VideoWriter.write(in_frame)
         else:
             # grayscale image
             self.__VideoWriter.write(cv2.cvtColor(in_frame,cv2.COLOR_GRAY2BGR))
