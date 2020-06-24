@@ -1,0 +1,10 @@
+
+File description
+|file| description
+|----|----------|
+|Top_configs_finder.py|a-output "new_top_configs_gt1.txt" <br> b-eading F1_score, execution time and fraction of each segment to calculate objective function value. Then, extracting 5 top configs based on objective function value.|
+|Keyframe_extraction_paper2015.py|Implementation of this paper: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4540463/ |
+|cnn_similarity|Using VGG19 architecture to extract features of key frames that are obtained using “keframe_extraction_paper2015.py”. These features are output of the last convolution layers.|
+|frame_extractor.py|Extracting the first frame of each segment to compare similarity among segments based on the images that are used in pipeline. Because keyframe of each segment is different from the processed frame in pipeline (the first frame of each segment), this file is used to generated features from the first frames instead of keyframes.|
+|frame_extractor.py|Extracting the first frame of each segment to compare similarity among segments based on the images that are used in pipeline. Because keyframe of each segment is different from the processed frame in pipeline (the first frame of each segment), this file is used to generated features from the first frames instead of keyframes.|
+|Idea_show.py|a-Reading most similar segments, which are obtained by KNN_CNN_Similarity.py.<br>b-Reading all configs<br>c-Reading top configs of each segment<br>d-Finding the most similar past segment, getting its top configs. Then, using voting among top configs, it look for the most repeated model name, frame size and frame rate among top configs. This gives us a config to process the current segment, which is called 1st winner config.<br>e-Choosing the second top config (2nd winner config) based on the following rule: if there is a second model, it is replaced by the model in the 1st winner config. Otherwise, the frame rate is checked. If there is no second frame rate to replace in the 1st winner config, the frame size is chosen.|
